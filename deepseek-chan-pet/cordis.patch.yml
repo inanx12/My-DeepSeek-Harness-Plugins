@@ -1,0 +1,4 @@
+# Adds one plugin row. Replaces no official DSH component.
+- insert:
+    - id: deepseek-chan-pet
+      name: dsh-plugin-deepseek-chan

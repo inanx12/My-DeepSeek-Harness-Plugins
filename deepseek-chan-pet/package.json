@@ -1,0 +1,39 @@
+{
+  "name": "dsh-plugin-deepseek-chan",
+  "version": "0.1.0",
+  "description": "DeepSeek-chan: an interactive whale-girl pet for DeepSeek Harness, with reactions, speech bubbles and emoji moods.",
+  "icon": "./assets/icon.png",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./assets/icon.png",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": ["index.js", "lib", "locale/*.json", "assets/icon.png", "cordis.patch.yml", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "art": "python3 tools/process-art.py",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": { "node": ">=22" },
+  "keywords": ["dsh-plugin", "deepseek-harness", "pet", "whale"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
+    }
+  }
+}

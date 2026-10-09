@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DeepSeek-chan Preview</title>
+<style>
+  :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+  body { margin: 0; min-height: 100vh; background: light-dark(#f4f6fb, #17181c); color: light-dark(#1d2233, #e7e9f0); }
+  main { max-width: 720px; padding: 32px 20px; }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p { margin: 0 0 16px; line-height: 1.55; opacity: .8; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  button { font: inherit; padding: 8px 14px; border-radius: 10px; border: 1px solid light-dark(#cfd6ea, #3a3d48); background: light-dark(#fff, #23252c); color: inherit; cursor: pointer; }
+  button[aria-pressed=true] { background: #4d6bfe; border-color: #4d6bfe; color: #fff; }
+  kbd { padding: 1px 6px; border-radius: 6px; border: 1px solid light-dark(#cfd6ea, #3a3d48); font-size: 12px; }
+  ul { padding-left: 18px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<main>
+  <h1>DeepSeek-chan · çevrimdışı önizleme <small>v__VERSION__</small></h1>
+  <p>DSH'ye bağlanmaz; oturum durumlarını aşağıdaki düğmelerle taklit eder. Sağ alttaki balina kıza dokun!</p>
+  <div class="row" role="group" aria-label="Simulated session state">
+    <button data-sim="idle" aria-pressed="true">Boşta</button>
+    <button data-sim="working">Çalışıyor</button>
+    <button data-sim="working2">2 oturum çalışıyor</button>
+    <button data-sim="waiting">Onay bekliyor</button>
+    <button data-sim="done">Görevi bitir</button>
+    <button data-sim="offline">Bağlantı yok</button>
+  </div>
+  <div class="row">
+    <button data-say="idle">Kendi kendine konuş</button>
+    <button data-say="sleep">Hemen uyut</button>
+  </div>
+  <ul>
+    <li><b>Sol tık</b>: rastgele tepki · <b>hızlı 5 tık</b>: sinirlenir · <b>9 tık</b>: küser (arkasını döner)</li>
+    <li><b>Çift tık</b>: sevgi 💙 · <b>Orta tık (tekerlek tıkı)</b>: başını okşa, küslüğü bitirir</li>
+    <li><b>Sürükle</b>: taşı (hızlı sallarsan panikler) · <b>Tekerlek</b>: boyutlandır</li>
+    <li><b>Sağ tık</b> veya <kbd>Enter</kbd>: ayarlar · <b>Ok tuşları</b>: taşı</li>
+  </ul>
+</main>
+<div id="pet-host"></div>
+<script>/*__RUNTIME__*/</script>
+<script>
+(function () {
+  const { PetWidget, SessionTracker, MEDIA, CSS } = window.DeepSeekChan;
+  const widget = window.__w = new PetWidget(document.getElementById('pet-host'), { media: MEDIA, css: CSS, dshLocale: navigator.language });
+  const tracker = new SessionTracker();
+  const sessions = { a: { id: 'a', retainedBy: { mainView: 1 } }, b: { id: 'b', retainedBy: {} } };
+  let state = { connected: true, running: [], pending: [] };
+  function push() {
+    const statuses = new Map(Object.keys(sessions).map(id => [id, {
+      running: state.running.includes(id),
+      pendingInteraction: state.pending.includes(id) ? { kind: 'approval' } : undefined,
+      completionUnread: false,
+    }]));
+    widget.update(tracker.update({
+      catalog: { phase: 'ready', byId: sessions }, statuses, connected: state.connected,
+      currentSessionId: 'a', scope: widget.preferences.scope,
+    }));
+  }
+  widget.onScopeChange = push;
+  const presets = {
+    idle: { connected: true, running: [], pending: [] },
+    working: { connected: true, running: ['a'], pending: [] },
+    working2: { connected: true, running: ['a', 'b'], pending: [] },
+    waiting: { connected: true, running: ['a'], pending: ['a'] },
+    offline: { connected: false, running: [], pending: [] },
+  };
+  document.querySelectorAll('[data-sim]').forEach(button => button.addEventListener('click', () => {
+    const sim = button.dataset.sim;
+    if (sim === 'done') {
+      if (!state.running.length) { state = { ...presets.working }; push(); }
+      state = { connected: true, running: [], pending: [] };
+    } else state = { ...presets[sim] };
+    document.querySelectorAll('[data-sim]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.sim === (sim === 'done' ? 'idle' : sim))));
+    push();
+  }));
+  document.querySelector('[data-say=idle]').addEventListener('click', () => widget.act(t => widget.brain.react('idle', t)));
+  document.querySelector('[data-say=sleep]').addEventListener('click', () => { widget.brain.idleSince = -1e12; widget.paint(); });
+  push();
+})();
+</script>
+</body>
+</html>
