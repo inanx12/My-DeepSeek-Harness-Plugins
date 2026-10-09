@@ -15,7 +15,7 @@
 .stage{all:unset;box-sizing:border-box;position:absolute;inset:0;cursor:grab;touch-action:none;-webkit-app-region:no-drag;border-radius:24px}
 /* Only the art itself is clickable, not the empty corners of the square. */
 .stage{pointer-events:none}
-.body{pointer-events:auto}
+.body{pointer-events:auto;touch-action:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .stage:focus-visible{outline:2px dashed var(--accent);outline-offset:2px}
 .pet[data-dragging=true] .stage{cursor:grabbing}
 .shadow{position:absolute;bottom:2px;left:calc(var(--art-left,30px) + var(--art-width,110px) * .18);width:calc(var(--art-width,110px) * .64);height:10px;border-radius:50%;background:radial-gradient(#1b276630,#1b276600 70%);transition:opacity .2s,transform .2s}

@@ -263,14 +263,23 @@ export class PetWidget {
     if (e.button !== 0 || !e.isPrimary) return;
     this.suppressClick = false;
     this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, originX: this.position.x, originY: this.position.y,
-      moved: false, lastX: e.clientX, lastY: e.clientY, lastT: this.now(), swing: 0 };
+      moved: false, lastX: e.clientX, lastY: e.clientY, lastT: this.now(), swing: 0, longPress: false };
     this.stage.setPointerCapture(e.pointerId);
+    // Touch screens have no right button: a long press opens the settings instead.
+    if (e.pointerType !== 'mouse') {
+      clearTimeout(this.pressTimer);
+      this.pressTimer = setTimeout(() => {
+        if (this.drag && !this.drag.moved) { this.drag.longPress = true; this.openPanel(); }
+      }, 550);
+    }
   }
   pointerMove(e) {
     const drag = this.drag;
     if (!drag || drag.id !== e.pointerId) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; this.act(t => this.brain.dragStart(t)); }
+    if (!drag.moved && !drag.longPress && Math.hypot(dx, dy) > 5) {
+      drag.moved = true; clearTimeout(this.pressTimer); this.act(t => this.brain.dragStart(t));
+    }
     if (!drag.moved) return;
     const t = this.now(), dt = Math.max(1, t - drag.lastT);
     const vx = (e.clientX - drag.lastX) / dt, vy = (e.clientY - drag.lastY) / dt;
@@ -286,7 +295,8 @@ export class PetWidget {
     const drag = this.drag;
     if (!drag || drag.id !== e.pointerId) return;
     this.drag = null;
-    this.suppressClick = drag.moved || cancelled;
+    clearTimeout(this.pressTimer);
+    this.suppressClick = drag.moved || drag.longPress || cancelled;
     this.pet.style.setProperty('--swing', '0deg');
     if (drag.moved) {
       this.preferences.x = this.position.x; this.preferences.y = this.position.y; this.save();
@@ -392,7 +402,7 @@ export class PetWidget {
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
-    clearInterval(this.typer); clearTimeout(this.saveTimer);
+    clearInterval(this.typer); clearTimeout(this.saveTimer); clearTimeout(this.pressTimer);
     for (const cleanup of this.cleanups.splice(0).reverse()) cleanup();
     this.clip.pause();
     for (const url of this.blobUrls.values()) if (url.startsWith('blob:')) URL.revokeObjectURL(url);
