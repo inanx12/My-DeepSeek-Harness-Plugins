@@ -1,5 +1,7 @@
 # Videolar (isteğe bağlı)
 
+**Türkçe** | [English](README.en.md)
+
 Buraya `<poz>.webm` veya `<poz>.mp4` koyarsan o pozun sprite'ı yerine döngülü, sessiz video oynar.
 Sonra `node tools/build.mjs` çalıştır.
 

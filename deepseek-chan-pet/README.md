@@ -1,5 +1,7 @@
 # DeepSeek-chan 🐋 — DeepSeek Harness pet plugin'i
 
+**Türkçe** | [English](README.en.md)
+
 Balina kız **DeepSeek-chan**, DSH penceresinin üstünde yaşar: tıklamana, sürüklemene, başını okşamana ve
 oturumlarının durumuna konuşma balonu + sağ üst köşede emoji rozetiyle tepki verir.
 
@@ -21,6 +23,7 @@ etkileşim, duygu ve video desteği eklendi.
 | **Sağ tık** / `Enter` | Ayarlar paneli |
 | **Ok tuşları** (`Shift` ile hızlı) | Taşır |
 | **Üzerine gel** | Durum balonunu ve emojiyi gösterir |
+| **Dokunmatik ekran** | Dokun = tık, çift dokun = sevgi, basılı tut = ayarlar, parmakla sürükle = taşı |
 
 ## DSH oturumlarına tepkileri
 

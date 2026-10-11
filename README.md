@@ -1,5 +1,7 @@
 # My DeepSeek Harness Plugins
 
+**Türkçe** | [English](README.en.md)
+
 Kendi yazdığım [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) plugin'leri.
 
 | Plugin | Açıklama |
