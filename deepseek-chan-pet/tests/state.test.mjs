@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PetBrain, SessionTracker, cleanPreferences, clampPosition, ANGRY_CLICKS, SULK_CLICKS, DURATION } from '../src/state.js';
+import { PetBrain, SessionTracker, cleanPreferences, clampPosition, ANGRY_CLICKS, FURIOUS_CLICKS, SULK_CLICKS, DURATION } from '../src/state.js';
 import { LINES, EMOTIONS, pickLine } from '../src/dialogue.js';
 import { resolveLanguage } from '../src/i18n.js';
 
@@ -79,12 +79,15 @@ test('brain: waiting outranks system notices but not the user', () => {
   assert.equal(v.trigger, 'pokeWaiting');
 });
 
-test('brain: click combo -> angry -> sulk, pat forgives', () => {
+test('brain: click combo -> angry -> furious -> sulk, pat forgives', () => {
   const b = new PetBrain({ now: 0, random: () => 0.99 });
   b.update({ available: true, doneSeq: 0, scopeKey: 'g' }, 0);
   for (let i = 0; i < ANGRY_CLICKS; i++) b.poke(100 + i * 50);
   assert.equal(b.view(400).trigger, 'angry');
-  for (let i = ANGRY_CLICKS; i < SULK_CLICKS; i++) b.poke(100 + i * 50);
+  for (let i = ANGRY_CLICKS; i < FURIOUS_CLICKS; i++) b.poke(100 + i * 50);
+  assert.equal(b.view(500).trigger, 'furious');
+  assert.equal(b.view(500).pose, 'furious');
+  for (let i = FURIOUS_CLICKS; i < SULK_CLICKS; i++) b.poke(100 + i * 50);
   let v = b.view(600);
   assert.equal(v.trigger, 'sulk');
   b.poke(700);                                 // ignored while sulking

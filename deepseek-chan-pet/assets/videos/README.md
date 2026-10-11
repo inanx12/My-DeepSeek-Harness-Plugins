@@ -3,7 +3,7 @@
 Buraya `<poz>.webm` veya `<poz>.mp4` koyarsan o pozun sprite'ı yerine döngülü, sessiz video oynar.
 Sonra `node tools/build.mjs` çalıştır.
 
-Poz adları: `idle happy cheer pleading angry smug crying surprised sleepy love shy sulk back proud speechless scheming go panic thanks side`
+Poz adları: `idle happy cheer pleading angry smug crying surprised sleepy love shy sulk back proud speechless scheming go panic thanks side furious excited laugh dizzy shocked pout smile nervous bashful smirk thinking confused wink adoring yawn sad`
 
 - **Önerilen:** VP9 + alfa kanallı WebM (şeffaf arka plan). Yeşil ekranlı bir klibi dönüştürmek için:
   `tools/video-to-webm.sh klip.mp4 happy`

@@ -10,9 +10,10 @@ etkileşim, duygu ve video desteği eklendi.
 
 | Ne yaparsın | Ne olur |
 |---|---|
-| **Sol tık** | Rastgele tepki (mutlu, utangaç, kibirli, teşekkür, "......" …). Çalışırken "şu an çalışıyorum", uyurken "uyumuyordum!" der |
+| **Sol tık** | Rastgele tepki (mutlu, gülme, göz kırpma, utangaç, kibirli, şaşkın, teşekkür, "......" …). Çalışırken "şu an çalışıyorum", uyurken "uyumuyordum!" der |
 | **Çift tık** | Sevgi 💙 — kalp atışı animasyonu + uçuşan kalpler |
 | **Hızlı 5 tık** | Sinirlenir 💢 (titreme) |
+| **Hızlı 7 tık** | Çok sinirlenir, bağırır 🤬 |
 | **Hızlı 9 tık** | Küser 😤 — **arkasını döner**, tıklamaları yok sayar |
 | **Orta tık (tekerlek tıkı)** | Başını okşa 😳. Küsmüşse **affeder** |
 | **Sürükle** | İmlece asılı sallanır (hıza göre sarkaç), hızlı sallarsan panikler 😱, bırakınca teşekkür eder |
@@ -76,12 +77,25 @@ Kurduktan sonra sağ altta belirir. Güncellemeden sonra çalışan görevleri b
   gömülüyor (DSH plugin dosyalarını ayrı URL'den sunmuyor), o yüzden toplam boyutu birkaç MB'da tut.
 - Alternatif: video yerine animasyonlu WebP/APNG → `assets/animated/<poz>.webp`.
 
-Poz adları: `idle happy cheer pleading angry smug crying surprised sleepy love shy sulk back proud speechless scheming go panic thanks side`
+Poz adları: `idle happy cheer pleading angry smug crying surprised sleepy love shy sulk back proud speechless scheming go panic thanks side furious excited laugh dizzy shocked pout smile nervous bashful smirk thinking confused wink adoring yawn sad`
+
+## Görseller
+
+36 poz var: tam boy duruş, önden/yandan/arkadan pozlar ve 32 sticker duygusu. Sticker kaynakları
+repodaki `Emojiler/` klasöründe; `tools/process-art.py` bunları şeffaf sprite'a çeviriyor:
+
+- `Emojiler/eskilerin yüksek çözünürlüklüleri/`: ilk 16 duygunun HD halleri. Alttaki Çince yazı kesiliyor.
+- `Emojiler/yeni eklenecek emojiler/`: 16 yeni duygu (çok sinirli, heyecanlı, gülme, başı dönmüş, şok,
+  surat asma, gülümseme, gergin, utangaç gülüş, sırıtma, düşünme, kafası karışık, göz kırpma,
+  kalp gözler, esneme, üzgün). Beyaz sticker çerçevesi siliniyor.
+
+Yeni bir sticker eklemek için dosyayı bu klasörlerden birine koy, `process-art.py` içindeki tabloya
+dosya adı → poz adı satırı ekle, `src/dialogue.js`'e bir duygu ve replik ekle, sonra build al.
 
 ## Geliştirme
 
 ```sh
-python3 tools/process-art.py   # art/source/* → assets/sprites/*.webp (Pillow + numpy)
+python3 tools/process-art.py   # art/source/* + ../Emojiler/* → assets/sprites/*.webp (Pillow + numpy; ~2 dk)
 node tools/build.mjs           # src/ + sprite/video → lib/client.js ve preview/index.html
 npm test                       # durum makinesi + paket testleri (node:test, bağımlılık yok)
 ```

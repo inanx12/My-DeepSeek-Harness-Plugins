@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Cut DeepSeek-chan's source art into transparent sprites.
 
-Usage:  python3 tools/process-art.py            (from the plugin folder)
+Usage:  python3 tools/process-art.py [fullbody|turnaround|hd|new ...]   (from the plugin folder)
 
 Reads   art/source/fullbody.jpg     full-body standing pose (flat grey background)
         art/source/turnaround.webp  front / side / back sheet (flat grey background)
-        art/source/stickers.jpg     4x4 expression sheet with captions (white background)
+        ../Emojiler/eskilerin yüksek çözünürlüklüleri/*.jpg
+                                    HD versions of the 16 original stickers (caption underneath)
+        ../Emojiler/yeni eklenecek emojiler/*.jpg
+                                    16 newer die-cut stickers (white border + grey outline)
 Writes  assets/sprites/<name>.webp  transparent sprites consumed by tools/build.mjs
 
 Only Pillow and numpy are needed. Background removal is a tolerance flood fill
@@ -14,6 +17,7 @@ Re-run it whenever the source art changes; the outputs are committed.
 """
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -25,13 +29,48 @@ SRC = ROOT / "art" / "source"
 OUT = ROOT / "assets" / "sprites"
 MAGENTA = (255, 0, 255)
 
-# Sticker sheet, row-major. Names are the emotion ids used by src/dialogue.js.
-STICKERS = [
-    "happy", "pleading", "angry", "smug",
-    "crying", "surprised", "sleepy", "love",
-    "shy", "sulk", "proud", "speechless",
-    "scheming", "go", "panic", "thanks",
-]
+EMOJI = ROOT.parent / "Emojiler"
+HD_DIR = EMOJI / "eskilerin yüksek çözünürlüklüleri"
+NEW_DIR = EMOJI / "yeni eklenecek emojiler"
+STICKER_HEIGHT = 440      # final sprite height: crisp at 180% size on a 2x screen
+
+# File stem (timestamp suffix removed) -> pose name used by src/dialogue.js.
+HD_STICKERS = {
+    "Anime_girl_acting_cute_with_hearts": "pleading",
+    "Anime_girl_angry_arms_crossed": "angry",
+    "Anime_girl_blushing_embarrassed": "shy",
+    "Anime_girl_charging_fist_forward": "go",
+    "Anime_girl_cheering_with_hearts": "happy",
+    "Anime_girl_crying_tears": "crying",
+    "Anime_girl_holding_heart_love": "love",
+    "Anime_girl_panicked_trembling": "panic",
+    "Anime_girl_proud_boasting": "proud",
+    "Anime_girl_shocked_surprised": "surprised",
+    "Anime_girl_sinister_smile_scheming": "scheming",
+    "Anime_girl_speechless_deadpan": "speechless",
+    "Anime_girl_sticking_tongue_out_teasing": "smug",
+    "Anime_girl_sulking_arms_crossed": "sulk",
+    "Anime_girl_thanking_hands_together": "thanks",
+    "Anime_girl_yawning_sleepy": "sleepy",
+}
+NEW_STICKERS = {
+    "Angry_anime_girl_shouting_portrait": "furious",
+    "Anime_girl_cheering_enthusiastic": "excited",
+    "Anime_girl_laughing_portrait": "laugh",
+    "Anime_girl_looking_panicked": "dizzy",
+    "Anime_girl_looking_shocked": "shocked",
+    "Anime_girl_pouting_with_arms": "pout",
+    "Anime_girl_smiling": "smile",
+    "Anime_girl_smiling_nervously": "nervous",
+    "Anime_girl_smiling_shyly": "bashful",
+    "Anime_girl_smirking": "smirk",
+    "Anime_girl_thinking": "thinking",
+    "Anime_girl_tilting_head": "confused",
+    "Anime_girl_winking_and_smiling": "wink",
+    "Anime_girl_with_heart_eyes": "adoring",
+    "Anime_girl_yawning": "yawn",
+    "Sad_anime_girl_crying": "sad",
+}
 
 
 def flood_background(rgb: Image.Image, tolerance: int, seeds: str = "tlrb") -> np.ndarray:
@@ -100,10 +139,13 @@ def keep_components(alpha: np.ndarray, min_area: int, relative: float = 0.0, sid
     return np.where(keep, alpha, 0).astype(np.uint8)
 
 
-def cutout(rgb: Image.Image, tolerance: int, seeds: str = "tlrb") -> Image.Image:
-    """Background -> transparent, with a soft, colour-decontaminated edge."""
+def cutout(rgb: Image.Image, tolerance: int, seeds: str = "tlrb", fill_source: Image.Image | None = None) -> Image.Image:
+    """Background -> transparent, with a soft, colour-decontaminated edge.
+
+    fill_source, when given, is the image the flood fill runs on (same size);
+    colours still come from rgb. Used to paint over a sticker's outline first."""
     arr = np.asarray(rgb).astype(np.float32)
-    bg_mask = flood_background(rgb, tolerance, seeds)
+    bg_mask = flood_background(fill_source or rgb, tolerance, seeds)
     bg = np.median(arr[bg_mask], axis=0) if bg_mask.any() else np.array([255, 255, 255], np.float32)
     # Distance from the background colour drives a soft alpha only on the rim.
     dist = np.abs(arr - bg).max(axis=2)
@@ -178,44 +220,95 @@ def process_turnaround() -> None:
         save(trim(part), name)
 
 
-# The sheet's rows are not evenly spaced. Each row's art is bounded by the
-# quietest line inside these windows (fractions of the sheet height): above it
-# is the previous caption, below it this row's caption.
-ROW_WINDOWS = [((0.000, 0.000), (0.234, 0.253)),
-               ((0.272, 0.288), (0.478, 0.497)),
-               ((0.509, 0.525), (0.711, 0.727)),
-               ((0.738, 0.753), (0.934, 0.953))]
+def stem_of(path: Path) -> str:
+    """'Anime_girl_smiling_20261011022207.jpg' -> 'Anime_girl_smiling' (also drops a trailing '…')."""
+    return re.sub(r"_\d{14}$", "", path.stem).rstrip("…").rstrip("_")
 
 
-def quietest(ink: np.ndarray, window: tuple[float, float], height: int) -> int:
-    lo, hi = int(window[0] * height), int(window[1] * height)
-    if hi <= lo: return lo
-    return lo + int(np.argmin(ink[lo:hi + 1]))
+def load_scaled(path: Path, width: int) -> Image.Image:
+    im = Image.open(path).convert("RGB")
+    return im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
 
 
-def process_stickers() -> None:
-    sheet = Image.open(SRC / "stickers.jpg").convert("RGB")
-    gray_sheet = np.asarray(sheet.convert("L"))
-    cw = sheet.width // 4
-    for index, name in enumerate(STICKERS):
-        col, row = index % 4, index // 4
-        ink = (gray_sheet[:, col * cw:(col + 1) * cw] < 235).sum(axis=1)
-        top_window, bottom_window = ROW_WINDOWS[row]
-        top = quietest(ink, top_window, sheet.height)
-        bottom = quietest(ink, bottom_window, sheet.height)
-        art = sheet.crop((col * cw, top, (col + 1) * cw, bottom))
-        # The bust is cut flat at the bottom: never seed the fill from that edge,
-        # or the white apron would leak into the background.
-        im = cutout(art, tolerance=22, seeds="tlr")
-        im.putalpha(Image.fromarray(keep_components(np.asarray(im.getchannel("A")), 18, side_bleed=0.12)))
-        save(trim(im, pad=2), name)
+def dark_rows(rgb: Image.Image, level: int) -> np.ndarray:
+    """Per row, how many pixels are darker than `level` in every channel."""
+    return (np.asarray(rgb).max(axis=2) < level).sum(axis=1)
+
+
+def seal_bottom(art: Image.Image, fill: Image.Image, level: int = 90) -> Image.Image:
+    """Draw a dark line along the art's flat-cut bottom row in the fill image.
+
+    The bust is cut flat, so the white apron touches the bottom edge. Without a
+    barrier the background fill would run along that edge and into the apron."""
+    row = np.asarray(art)[-1].max(axis=1) < level
+    xs = np.flatnonzero(row)
+    if len(xs):
+        sealed = fill.copy()
+        ImageDraw.Draw(sealed).line([(int(xs[0]), art.height - 1), (int(xs[-1]), art.height - 1)], fill=(0, 0, 0), width=1)
+        return sealed
+    return fill
+
+
+def flat_cut(rgb: Image.Image, limit: int | None = None) -> int:
+    """Row just below the last line that is mostly real line art (the bust's flat bottom)."""
+    rows = dark_rows(rgb, 90)[:limit]
+    return int(np.flatnonzero(rows > rgb.width * 0.04).max()) + 1
+
+
+def process_hd_sticker(path: Path, name: str) -> None:
+    """Old stickers in HD: art, a blank gap, then a Chinese caption. Keep only the art."""
+    src = load_scaled(path, 720)
+    ink = (np.asarray(src.convert("L")) < 235).sum(axis=1)
+    y = len(ink) - 1
+    while y > 0 and ink[y] <= 1: y -= 1      # bottom margin
+    while y > 0 and ink[y] > 1: y -= 1       # caption text
+    while y > 0 and ink[y] <= 1: y -= 1      # gap above the caption
+    art = src.crop((0, 0, src.width, flat_cut(src, y + 1)))
+    # Seed from top/left/right only and seal the flat bottom, or the apron leaks.
+    im = cutout(art, tolerance=22, seeds="tlr", fill_source=seal_bottom(art, art))
+    im.putalpha(Image.fromarray(keep_components(np.asarray(im.getchannel("A")), 60, side_bleed=0.12)))
+    save(fit(trim(im, pad=3), STICKER_HEIGHT), name)
+
+
+def process_new_sticker(path: Path, name: str) -> None:
+    """Die-cut stickers: grey outline, white border, then the art with a flat-cut bottom."""
+    src = load_scaled(path, 720)
+    # 1) The page background outside the sticker outline.
+    outside = flood_background(src, tolerance=10)
+    # 2) Paint the outline (a few px past the outside) white, so the next fill
+    #    runs straight through the white border and stops at the line art.
+    grown = Image.fromarray(outside.astype(np.uint8) * 255).filter(ImageFilter.MaxFilter(13))
+    fill = src.copy()
+    fill.paste((255, 255, 255), mask=grown)
+    # 3) Cut at the art's flat bottom so the apron never meets the border below it.
+    cut = flat_cut(src)
+    art, fill = src.crop((0, 0, src.width, cut)), fill.crop((0, 0, src.width, cut))
+    # Low tolerance: the white headband frills have faint grey outlines.
+    im = cutout(art, tolerance=12, seeds="tlr", fill_source=seal_bottom(art, fill))
+    im.putalpha(Image.fromarray(keep_components(np.asarray(im.getchannel("A")), 60, relative=0.01)))
+    save(fit(trim(im, pad=3), STICKER_HEIGHT), name)
+
+
+def process_stickers(directory: Path, table: dict[str, str], worker) -> None:
+    if not directory.is_dir():
+        print(f"  {directory} not found; keeping existing sprites", file=sys.stderr)
+        return
+    found = {stem_of(p): p for p in sorted(directory.glob("*.jpg"))}
+    for stem, name in table.items():
+        if stem in found: worker(found[stem], name)
+        else: print(f"  ! missing {stem}.jpg in {directory.name}", file=sys.stderr)
+    for stem in sorted(set(found) - set(table)):
+        print(f"  ! {stem}.jpg has no pose mapping; add it to process-art.py", file=sys.stderr)
 
 
 def main() -> None:
+    """Optional args pick steps: fullbody, turnaround, hd, new (default: all)."""
+    steps = set(sys.argv[1:]) or {"fullbody", "turnaround", "hd", "new"}
     OUT.mkdir(parents=True, exist_ok=True)
-    print("full body:"); process_fullbody()
-    print("turnaround:"); process_turnaround()
-    print("stickers:"); process_stickers()
+    if "fullbody" in steps: print("full body:"); process_fullbody()
+    if "turnaround" in steps: print("turnaround:"); process_turnaround()
+    if "hd" in steps: print("HD stickers:"); process_stickers(HD_DIR, HD_STICKERS, process_hd_sticker)
+    if "new" in steps: print("new stickers:"); process_stickers(NEW_DIR, NEW_STICKERS, process_new_sticker)
 
 
 if __name__ == "__main__":

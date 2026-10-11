@@ -87,12 +87,13 @@ export class SessionTracker {
 
 /** How long each kind of reaction stays on screen (ms). */
 export const DURATION = Object.freeze({
-  poke: 2600, love: 3200, pat: 3000, angry: 3200, sulk: 6500, forgive: 3200,
+  poke: 2600, love: 3200, pat: 3000, angry: 3200, furious: 3200, sulk: 6500, forgive: 3200,
   wake: 2800, dragStart: 1500, drop: 2600, done: 4500, working: 3200, idle: 4500,
   hello: 4200, resize: 1200,
 });
 export const COMBO_WINDOW_MS = 2500;
 export const ANGRY_CLICKS = 5;
+export const FURIOUS_CLICKS = 7;
 export const SULK_CLICKS = 9;
 const SYSTEM = new Set(['done', 'working', 'idle', 'hello']);
 
@@ -153,7 +154,7 @@ export class PetBrain {
     this.snapshot = next;
     return this.view(now);
   }
-  /** Left click. Counts a combo: enough quick clicks make her angry, then sulky. */
+  /** Left click. Counts a combo: quick clicks make her angry (5), furious (7), then sulky (9). */
   poke(now = Date.now()) {
     this.clicks = this.clicks.filter(t => now - t < COMBO_WINDOW_MS);
     this.clicks.push(now);
@@ -163,6 +164,7 @@ export class PetBrain {
       return this.view(now);
     }
     if (this.clicks.length >= SULK_CLICKS) { this.clicks = []; return this.react('sulk', now); }
+    if (this.clicks.length >= FURIOUS_CLICKS) return this.react('furious', now);
     if (this.clicks.length >= ANGRY_CLICKS) return this.react('angry', now);
     const state = this.baseState(now);
     if (state === 'sleeping') return this.react('wake', now);
