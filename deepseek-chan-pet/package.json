@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-deepseek-chan",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "DeepSeek-chan: an interactive whale-girl pet for DeepSeek Harness, with reactions, speech bubbles and emoji moods.",
   "icon": "./assets/icon.png",
   "type": "module",

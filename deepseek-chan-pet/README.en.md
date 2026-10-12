@@ -50,11 +50,11 @@ hide / bring back. Preferences are kept in the browser's `localStorage`.
 The built plugin (`lib/client.js`) is committed, so you do not need to build anything.
 
 **1) tgz package (easiest).** Run `npm pack` in this folder (or use a released
-`dsh-plugin-deepseek-chan-0.2.0.tgz`), keep the file somewhere permanent without extracting it, and paste
+`dsh-plugin-deepseek-chan-0.2.1.tgz`), keep the file somewhere permanent without extracting it, and paste
 its absolute path into DSH's **Plugins → Install** field:
 
 ```text
-C:\dsh-plugins\dsh-plugin-deepseek-chan-0.2.0.tgz
+C:\dsh-plugins\dsh-plugin-deepseek-chan-0.2.1.tgz
 ```
 
 **2) Local folder (best for development).** Clone the repo and paste the absolute path of this folder:
@@ -82,7 +82,8 @@ that pose then plays as a muted, looping video instead of the sprite. Details ar
 
 - Use **WebM VP9 with alpha** for a transparent background. DSH Desktop is Chromium-based and plays it
   fine. MP4/H.264 has no alpha, so a box appears around the character.
-- Got a green-screen clip? `tools/video-to-webm.sh clip.mp4 happy` (ffmpeg chromakey → VP9 alpha).
+- Got a green-screen clip? `PINGPONG=1 tools/video-to-webm.sh clip.mp4 idle` (ffmpeg chromakey → VP9 alpha, seamless forward/backward loop).
+- Green-screen start frames and ready-made prompts for generating videos live in `art/video-inputs/` (regenerate with `python3 tools/make-video-inputs.py`).
 - 2–4 s loops, ~360 px tall, under ~300 KB per file. Files are embedded into `lib/client.js` as base64
   (DSH does not serve plugin files from a separate URL), so keep the total to a few MB.
 - Alternative: an animated WebP/APNG instead of video → `assets/animated/<pose>.webp`.

@@ -479,6 +479,24 @@ class PetBrain {
   }
   /** Left click. Counts a combo: quick clicks make her angry (5), furious (7), then sulky (9). */
   poke(now = Date.now()) {
+    const combo = this.countClick(now);
+    if (combo) return combo;
+    const state = this.baseState(now);
+    if (state === 'sleeping') return this.react('wake', now);
+    if (state === 'waiting') return this.react('pokeWaiting', now, { duration: DURATION.poke });
+    if (state === 'working' && this.random() < 0.6) return this.react('pokeWorking', now, { duration: DURATION.poke });
+    return this.react('poke', now);
+  }
+  /**
+   * Second click of a double-click. It still counts toward the combo: rapid
+   * clicking (or tapping) produces many double-clicks, and they must not
+   * reset her temper.
+   */
+  love(now = Date.now()) {
+    return this.countClick(now) || this.react('love', now);
+  }
+  /** Record a click; returns a view when the combo (or a sulk) decides the reaction. */
+  countClick(now) {
     this.clicks = this.clicks.filter(t => now - t < COMBO_WINDOW_MS);
     this.clicks.push(now);
     const reaction = this.activeReaction(now);
@@ -489,13 +507,8 @@ class PetBrain {
     if (this.clicks.length >= SULK_CLICKS) { this.clicks = []; return this.react('sulk', now); }
     if (this.clicks.length >= FURIOUS_CLICKS) return this.react('furious', now);
     if (this.clicks.length >= ANGRY_CLICKS) return this.react('angry', now);
-    const state = this.baseState(now);
-    if (state === 'sleeping') return this.react('wake', now);
-    if (state === 'waiting') return this.react('pokeWaiting', now, { duration: DURATION.poke });
-    if (state === 'working' && this.random() < 0.6) return this.react('pokeWorking', now, { duration: DURATION.poke });
-    return this.react('poke', now);
+    return undefined;
   }
-  love(now = Date.now()) { this.clicks = []; return this.react('love', now); }
   /** Middle click: a head pat. Also the only way to end a sulk early. */
   pat(now = Date.now()) {
     this.clicks = [];

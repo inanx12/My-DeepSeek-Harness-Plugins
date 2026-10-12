@@ -97,6 +97,22 @@ test('brain: click combo -> angry -> furious -> sulk, pat forgives', () => {
   assert.equal(v.trigger, 'forgive'); assert.equal(v.emoji, EMOTIONS.thanks.emoji);
 });
 
+test('brain: double-clicks inside a fast combo still count toward her temper', () => {
+  // Real browsers report rapid clicks/taps as click, dblclick, click, dblclick...
+  const b = new PetBrain({ now: 0, random: () => 0.5 });
+  b.update({ available: true, doneSeq: 0, scopeKey: 'g' }, 0);
+  const seen = [];
+  for (let i = 0; i < SULK_CLICKS; i++) {
+    const t = 100 + i * 80;
+    (i % 2 ? b.love(t) : b.poke(t));
+    seen.push(b.view(t + 1).trigger);
+  }
+  assert.equal(seen[1], 'love');
+  assert.equal(seen[ANGRY_CLICKS - 1], 'angry');
+  assert.equal(seen[FURIOUS_CLICKS - 1], 'furious');
+  assert.equal(seen[SULK_CLICKS - 1], 'sulk');
+});
+
 test('brain: slow clicks never get angry', () => {
   const b = new PetBrain({ now: 0, random: () => 0.5 });
   b.update({ available: true, doneSeq: 0, scopeKey: 'g' }, 0);

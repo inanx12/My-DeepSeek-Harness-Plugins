@@ -63,7 +63,7 @@ mutlak yolunu yaz:
 github:inanx12/My-DeepSeek-Harness-Plugins#path:/deepseek-chan-pet
 ```
 
-**3) tgz paketi.** `npm pack` ile `dsh-plugin-deepseek-chan-0.2.0.tgz` üret, mutlak yolunu kurulum alanına yaz.
+**3) tgz paketi.** `npm pack` ile `dsh-plugin-deepseek-chan-0.2.1.tgz` üret, mutlak yolunu kurulum alanına yaz.
 
 Kurduktan sonra sağ altta belirir. Güncellemeden sonra çalışan görevleri bitirip DSH'yi tamamen kapatıp aç.
 
@@ -75,7 +75,8 @@ Kurduktan sonra sağ altta belirir. Güncellemeden sonra çalışan görevleri b
 
 - **WebM VP9 + alfa** kullan → arka plan şeffaf. DSH Desktop Chromium tabanlı, bunu sorunsuz oynatıyor.
   MP4/H.264'te alfa yok, karakterin etrafında kutu çıkar.
-- Elinde yeşil ekranlı klip varsa: `tools/video-to-webm.sh klip.mp4 happy` (ffmpeg chromakey → VP9 alfa).
+- Elinde yeşil ekranlı klip varsa: `PINGPONG=1 tools/video-to-webm.sh klip.mp4 idle` (ffmpeg chromakey → VP9 alfa, ileri-geri kusursuz döngü).
+- Video üretmek için yeşil zeminli başlangıç kareleri ve hazır prompt'lar `art/video-inputs/` içinde (`python3 tools/make-video-inputs.py` ile yeniden üretilir).
 - 2–4 sn döngü, ~360 px yükseklik, dosya başına ~300 KB altı. Dosyalar `lib/client.js` içine base64 olarak
   gömülüyor (DSH plugin dosyalarını ayrı URL'den sunmuyor), o yüzden toplam boyutu birkaç MB'da tut.
 - Alternatif: video yerine animasyonlu WebP/APNG → `assets/animated/<poz>.webp`.

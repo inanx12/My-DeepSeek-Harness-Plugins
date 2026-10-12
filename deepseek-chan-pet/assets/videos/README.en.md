@@ -8,7 +8,8 @@ Then run `node tools/build.mjs`.
 Pose names: `idle happy cheer pleading angry smug crying surprised sleepy love shy sulk back proud speechless scheming go panic thanks side furious excited laugh dizzy shocked pout smile nervous bashful smirk thinking confused wink adoring yawn sad`
 
 - **Recommended:** WebM with VP9 + alpha (transparent background). To convert a green-screen clip:
-  `tools/video-to-webm.sh clip.mp4 happy`
+  `PINGPONG=1 tools/video-to-webm.sh clip.mp4 idle` (`PINGPONG=1` makes the loop seamless)
+- Green-screen start frames and ready-made prompts for generating videos: [`art/video-inputs/`](../../art/video-inputs/README.md#english)
 - MP4 (H.264) has no alpha: a box shows around the character.
 - Keep it short (2–4 s loop), 320–400 px tall, with the character framed tightly (the emoji badge goes in
   the top-right corner of the frame).

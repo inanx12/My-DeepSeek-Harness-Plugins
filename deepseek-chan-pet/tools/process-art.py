@@ -194,13 +194,17 @@ def band_split(alpha: np.ndarray, axis: int, min_gap: int) -> list[tuple[int, in
     return spans
 
 
-def process_fullbody() -> None:
+def cut_fullbody(height: int = 900) -> Image.Image:
     src = Image.open(SRC / "fullbody.jpg").convert("RGB")
     # Work at a sane size first; the flood fill is the slow part.
-    src = src.resize((src.width * 900 // src.height, 900), Image.LANCZOS)
+    src = src.resize((src.width * height // src.height, height), Image.LANCZOS)
     im = cutout(src, tolerance=14)
     im.putalpha(Image.fromarray(keep_components(np.asarray(im.getchannel("A")), 400, 0.02)))
-    save(fit(trim(im), 520), "idle")
+    return trim(im)
+
+
+def process_fullbody() -> None:
+    save(fit(cut_fullbody(), 520), "idle")
 
 
 def process_turnaround() -> None:
@@ -255,9 +259,9 @@ def flat_cut(rgb: Image.Image, limit: int | None = None) -> int:
     return int(np.flatnonzero(rows > rgb.width * 0.04).max()) + 1
 
 
-def process_hd_sticker(path: Path, name: str) -> None:
+def cut_hd_sticker(path: Path, width: int = 720) -> Image.Image:
     """Old stickers in HD: art, a blank gap, then a Chinese caption. Keep only the art."""
-    src = load_scaled(path, 720)
+    src = load_scaled(path, width)
     ink = (np.asarray(src.convert("L")) < 235).sum(axis=1)
     y = len(ink) - 1
     while y > 0 and ink[y] <= 1: y -= 1      # bottom margin
@@ -267,17 +271,21 @@ def process_hd_sticker(path: Path, name: str) -> None:
     # Seed from top/left/right only and seal the flat bottom, or the apron leaks.
     im = cutout(art, tolerance=22, seeds="tlr", fill_source=seal_bottom(art, art))
     im.putalpha(Image.fromarray(keep_components(np.asarray(im.getchannel("A")), 60, side_bleed=0.12)))
-    save(fit(trim(im, pad=3), STICKER_HEIGHT), name)
+    return trim(im, pad=3)
 
 
-def process_new_sticker(path: Path, name: str) -> None:
+def process_hd_sticker(path: Path, name: str) -> None:
+    save(fit(cut_hd_sticker(path), STICKER_HEIGHT), name)
+
+
+def cut_new_sticker(path: Path, width: int = 720) -> Image.Image:
     """Die-cut stickers: grey outline, white border, then the art with a flat-cut bottom."""
-    src = load_scaled(path, 720)
+    src = load_scaled(path, width)
     # 1) The page background outside the sticker outline.
     outside = flood_background(src, tolerance=10)
     # 2) Paint the outline (a few px past the outside) white, so the next fill
     #    runs straight through the white border and stops at the line art.
-    grown = Image.fromarray(outside.astype(np.uint8) * 255).filter(ImageFilter.MaxFilter(13))
+    grown = Image.fromarray(outside.astype(np.uint8) * 255).filter(ImageFilter.MaxFilter(13 * width // 720 | 1))
     fill = src.copy()
     fill.paste((255, 255, 255), mask=grown)
     # 3) Cut at the art's flat bottom so the apron never meets the border below it.
@@ -286,7 +294,11 @@ def process_new_sticker(path: Path, name: str) -> None:
     # Low tolerance: the white headband frills have faint grey outlines.
     im = cutout(art, tolerance=12, seeds="tlr", fill_source=seal_bottom(art, fill))
     im.putalpha(Image.fromarray(keep_components(np.asarray(im.getchannel("A")), 60, relative=0.01)))
-    save(fit(trim(im, pad=3), STICKER_HEIGHT), name)
+    return trim(im, pad=3)
+
+
+def process_new_sticker(path: Path, name: str) -> None:
+    save(fit(cut_new_sticker(path), STICKER_HEIGHT), name)
 
 
 def process_stickers(directory: Path, table: dict[str, str], worker) -> None:
