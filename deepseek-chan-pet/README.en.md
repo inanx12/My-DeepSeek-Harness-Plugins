@@ -50,11 +50,11 @@ hide / bring back. Preferences are kept in the browser's `localStorage`.
 The built plugin (`lib/client.js`) is committed, so you do not need to build anything.
 
 **1) tgz package (easiest).** Run `npm pack` in this folder (or use a released
-`dsh-plugin-deepseek-chan-0.2.1.tgz`), keep the file somewhere permanent without extracting it, and paste
+`dsh-plugin-deepseek-chan-0.3.0.tgz`), keep the file somewhere permanent without extracting it, and paste
 its absolute path into DSH's **Plugins → Install** field:
 
 ```text
-C:\dsh-plugins\dsh-plugin-deepseek-chan-0.2.1.tgz
+C:\dsh-plugins\dsh-plugin-deepseek-chan-0.3.0.tgz
 ```
 
 **2) Local folder (best for development).** Clone the repo and paste the absolute path of this folder:

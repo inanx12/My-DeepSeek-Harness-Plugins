@@ -77,6 +77,20 @@ pout. Hair sways softly. Static locked camera, flat lighting, the green backgrou
 unchanged, same 2D anime art style and colors as the input image.
 ```
 
+## Örnek: şu anki `idle` videosu
+
+`Emojiler/videolar/451233894355461.mp4` (2560x1440, 16:9) şöyle dönüştürüldü:
+
+```sh
+KEY=0x8ADA82 SIMILARITY=0.08 BLEND=0.05 CROP=1056:1416:816:0 PINGPONG=1 DURATION=3 \
+  tools/video-to-webm.sh ../Emojiler/videolar/451233894355461.mp4 idle
+```
+
+- Araç arka planı saf yeşil değil **soluk yeşil** (`#8ADA82`) üretti; `KEY` o renge ayarlandı.
+- Soluk yeşil, beyaz ve açık renklere yakın olduğu için `SIMILARITY` düşük tutuldu (0.12'de önlük siliniyordu).
+- `CROP`: karakter karelerin tamamında x 841–1845, y 7–1388 aralığında; kadraj buna göre daraltıldı.
+- Sonuç: 268x360, 6 sn ileri-geri döngü, 284 KB.
+
 ## İpuçları
 
 - **İlk kare = görsel:** çoğu araç ilk kareyi aynen korur; bozulma genelde 3. saniyeden sonra başlar.
@@ -109,6 +123,11 @@ outfit stay intact. Then:
 PINGPONG=1 DURATION=2.5 tools/video-to-webm.sh idle-clip.mp4 idle
 node tools/build.mjs
 ```
+
+The current `idle.webm` came from `Emojiler/videolar/451233894355461.mp4` with
+`KEY=0x8ADA82 SIMILARITY=0.08 BLEND=0.05 CROP=1056:1416:816:0 PINGPONG=1 DURATION=3`: the tool produced a
+pale green (`#8ADA82`) instead of pure green, and a pale key needs a low similarity or the white apron
+goes too.
 
 `PINGPONG=1` plays the clip forward then backward for a seamless loop; `DURATION` takes the first N
 seconds; `START` skips a bad start; `CROP=w:h:x:y` frames her tightly (the emoji badge sits on the frame's

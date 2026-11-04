@@ -63,7 +63,7 @@ mutlak yolunu yaz:
 github:inanx12/My-DeepSeek-Harness-Plugins#path:/deepseek-chan-pet
 ```
 
-**3) tgz paketi.** `npm pack` ile `dsh-plugin-deepseek-chan-0.2.1.tgz` üret, mutlak yolunu kurulum alanına yaz.
+**3) tgz paketi.** `npm pack` ile `dsh-plugin-deepseek-chan-0.3.0.tgz` üret, mutlak yolunu kurulum alanına yaz.
 
 Kurduktan sonra sağ altta belirir. Güncellemeden sonra çalışan görevleri bitirip DSH'yi tamamen kapatıp aç.
 
